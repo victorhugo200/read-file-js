@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/style.css">
+    <title>Ler arquivos excel</title>
+</head>
+
+<body>
+    <main>
+        <form>
+            <input type="file" class="file">
+        </form>
+        <div class="container-table"></div>
+    </main>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.8.0/jszip.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.8.0/xlsx.js"></script>
+    <script>
+        const file = document.querySelector('.file');
+        file.addEventListener('change', (event) => {
+
+            const files = event.target.files;
+
+            console.log(event.target.files);
+            loadFile(files[0]);
+        });
+
+        // Para ler o arquivo a partir de uma requisição, descomentar o código abaixo.
+
+        // fetch('../file/controle-de-alunos-aprovados.xlsx')
+        //     .then((res) => res.blob())
+        //     .then((res) => {
+        //         const url = URL.createObjectURL(res);
+        //         const newFile = new File([res], 'excel.xlsx');
+        //         loadFile(newFile);
+        //     });
+
+        function loadFile(file) {
+            const fileReader = new FileReader();
+            fileReader.readAsBinaryString(file);
+            fileReader.onload = function () {
+                const data = fileReader.result;
+                const workbook = XLSX.read(data, {
+                    type: 'binary'
+                });
+                workbook.SheetNames.forEach(function (sheetName) {
+                    const objects = XLSX.utils.sheet_to_row_object_array(workbook.Sheets[sheetName]);
+                    const json_object = JSON.stringify(objects);
+                    const columnNames = Object.keys(objects[0]);
+                    const values = objects.map((value) => Object.values(value));
+                    table(columnNames, values);
+                })
+
+            }
+            fileReader.onerror = function () {
+                console.log('error');
+            }
+        }
+
+        function table(columnNames, values) {
+            const containerTable = document.querySelector('.container-table');
+            const table = document.createElement('table');
+            containerTable.innerHTML = ``;
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                 ${columnNames.map((columnName) => (
+                `<th>${columnName}</th>`
+            ))}
+                </tr>
+                </thead>
+               
+                ${values.map((value) => (
+                `
+                <tr>
+                    ${value.map((item) => (
+                    ` <td>${item}</td> `
+                ))}
+                 </tr>    
+                `
+            ))}
+            
+            `.split(',').join('');
+            containerTable.appendChild(table);
+        }
+    </script>
+</body>
+
+</html>
